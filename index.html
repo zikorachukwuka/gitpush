@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Git Push — Anambra Techies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & BASE ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #0d0d0d;
+      --white: #f5f5f0;
+      --gray-1: #1a1a1a;
+      --gray-2: #2a2a2a;
+      --gray-3: #444;
+      --gray-4: #888;
+      --gray-5: #bbb;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+      --serif: 'Instrument Serif', Georgia, serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--white); color: var(--black); }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: var(--black); }
+    ::-webkit-scrollbar-thumb { background: var(--gray-3); }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--gray-2);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 52px;
+    }
+    .nav-logo {
+      font-family: var(--mono); font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.04em; color: var(--white);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .nav-logo .prompt { color: var(--gray-4); }
+    .nav-links { display: flex; gap: 0.15rem; }
+    .nav-link {
+      font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gray-4);
+      background: none; border: 1px solid transparent;
+      padding: 0.3rem 0.75rem; cursor: pointer; text-decoration: none;
+      transition: all 0.15s; border-radius: 2px;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--white); border-color: var(--gray-3);
+      background: var(--gray-1);
+    }
+    .hamburger {
+      display: none; flex-direction: column; gap: 4px;
+      background: none; border: none; cursor: pointer; padding: 0.25rem;
+    }
+    .hamburger span {
+      width: 20px; height: 2px; background: var(--gray-4);
+      transition: all 0.2s;
+    }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 6rem 2rem 4rem; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%);
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 680px; }
+
+    .terminal-bar {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--gray-1); border: 1px solid var(--gray-2);
+      border-radius: 3px 3px 0 0; padding: 0.4rem 1rem;
+      font-size: 0.65rem; color: var(--gray-4); letter-spacing: 0.1em;
+      margin-bottom: 0; width: 100%; max-width: 520px;
+      text-align: left;
+    }
+    .terminal-dots { display: flex; gap: 5px; }
+    .td { width: 10px; height: 10px; border-radius: 50%; }
+    .td-r { background: #3a3a3a; }
+    .td-y { background: #3a3a3a; }
+    .td-g { background: #3a3a3a; }
+    .terminal-title { flex: 1; text-align: center; font-size: 0.6rem; }
+
+    .terminal-block {
+      background: var(--gray-1); border: 1px solid var(--gray-2);
+      border-top: none; border-radius: 0 0 3px 3px;
+      padding: 1.5rem 1.5rem 1.8rem;
+      text-align: left; max-width: 520px; width: 100%;
+      margin-bottom: 3rem;
+    }
+    .t-line { margin-bottom: 0.3rem; }
+    .t-prompt { color: var(--gray-4); }
+    .t-cmd { color: var(--white); font-weight: 500; }
+    .t-comment { color: var(--gray-3); }
+    .t-output { color: var(--gray-5); padding-left: 1.2rem; }
+    .t-blank { height: 0.6rem; }
+    .cursor {
+      display: inline-block; width: 8px; height: 14px;
+      background: var(--white); vertical-align: middle;
+      animation: blink 1.1s step-end infinite; margin-left: 2px;
+    }
+
+    .hero-headline {
+      font-family: var(--serif); font-size: clamp(4rem, 14vw, 9rem);
+      line-height: 0.88; letter-spacing: -0.02em;
+      color: var(--white); margin-bottom: 2.5rem;
+      font-weight: 400;
+    }
+    .hero-headline em { font-style: italic; color: var(--gray-5); }
+    .hero-sub {
+      font-family: var(--mono); font-size: 0.78rem; color: var(--gray-4);
+      letter-spacing: 0.06em; margin-bottom: 3rem; line-height: 1.8;
+    }
+    .hero-cta { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.75rem 1.8rem; border-radius: 2px; cursor: pointer;
+      text-decoration: none; transition: all 0.15s; display: inline-block;
+    }
+    .btn-primary { background: var(--white); color: var(--black); border: 1px solid var(--white); }
+    .btn-primary:hover { background: var(--gray-5); border-color: var(--gray-5); }
+    .btn-secondary { background: transparent; color: var(--white); border: 1px solid var(--gray-3); }
+    .btn-secondary:hover { border-color: var(--white); background: var(--gray-1); }
+
+    /* ── COUNTDOWN ── */
+    .countdown-strip {
+      border-top: 1px solid var(--gray-2); border-bottom: 1px solid var(--gray-2);
+      display: flex; justify-content: center; align-items: center;
+      gap: 0; overflow: hidden;
+    }
+    .cd-unit {
+      padding: 1.5rem 2.5rem; text-align: center; position: relative;
+      border-right: 1px solid var(--gray-2);
+    }
+    .cd-unit:last-child { border-right: none; }
+    .cd-num {
+      font-family: var(--mono); font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800; color: var(--white); line-height: 1;
+      font-variant-numeric: tabular-nums; display: block;
+    }
+    .cd-label {
+      font-size: 0.55rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--gray-4); margin-top: 0.4rem; display: block;
+    }
+    .explainer {
+      font-family: var(--mono); font-size: 0.72rem; color: var(--gray-5);
+      text-align: center; padding: 1.5rem 2rem; max-width: 600px; margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── SECTIONS ── */
+    section { padding: 6rem 2rem; max-width: 900px; margin: 0 auto; }
+    .section-eyebrow {
+      font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--gray-4); margin-bottom: 0.6rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .section-eyebrow::before { content: '//'; color: var(--gray-3); }
+    .section-heading {
+      font-family: var(--serif); font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 400; line-height: 1.1; color: var(--white);
+      margin-bottom: 3rem;
+    }
+    .section-heading em { font-style: italic; color: var(--gray-5); }
+
+    /* ── INFO GRID ── */
+    .info-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px; background: var(--gray-2); border: 1px solid var(--gray-2);
+      border-radius: 3px; overflow: hidden; margin-bottom: 4rem;
+    }
+    .info-cell {
+      background: var(--black); padding: 1.4rem 1.6rem;
+    }
+    .info-cell-label { font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray-4); margin-bottom: 0.5rem; }
+    .info-cell-value { font-size: 0.92rem; font-weight: 500; color: var(--white); }
+
+    /* ── AGENDA ── */
+    .agenda { display: flex; flex-direction: column; gap: 0; }
+    .agenda-item {
+      display: grid; grid-template-columns: 90px 1fr;
+      gap: 2rem; padding: 1.4rem 0;
+      border-bottom: 1px solid var(--gray-2);
+      animation: fadeUp 0.5s ease both;
+    }
+    .agenda-item:first-child { border-top: 1px solid var(--gray-2); }
+    .agenda-time { font-size: 0.65rem; color: var(--gray-4); padding-top: 0.15rem; letter-spacing: 0.05em; }
+    .agenda-name { font-weight: 700; font-size: 0.9rem; color: var(--white); margin-bottom: 0.3rem; }
+    .agenda-desc { font-size: 0.78rem; color: var(--gray-4); line-height: 1.7; }
+
+    /* ── FORM SECTION ── */
+    .forms-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 720px) { .forms-grid { grid-template-columns: 1fr; } }
+    .form-panel {
+      border: 1px solid var(--gray-2); border-radius: 3px; overflow: hidden;
+    }
+    .form-header {
+      background: var(--gray-1); border-bottom: 1px solid var(--gray-2);
+      padding: 1rem 1.4rem; display: flex; align-items: center; gap: 0.6rem;
+    }
+    .form-header-icon { font-size: 0.9rem; }
+    .form-header-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: var(--white); }
+    .form-header-sub { font-size: 0.62rem; color: var(--gray-4); margin-left: auto; }
+    .form-body { padding: 1.4rem; }
+    .field-group { margin-bottom: 1rem; }
+    .field-label {
+      display: block; font-size: 0.6rem; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--gray-4); margin-bottom: 0.4rem;
+    }
+    .field-label .req { color: var(--gray-3); }
+    input[type=text], input[type=email], select, textarea {
+      width: 100%; background: var(--gray-1);
+      border: 1px solid var(--gray-2); border-radius: 2px;
+      padding: 0.65rem 0.85rem; color: var(--white);
+      font-family: var(--mono); font-size: 0.78rem; outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+    input[type=text]:focus, input[type=email]:focus, select:focus, textarea:focus {
+      border-color: var(--gray-4);
+    }
+    input::placeholder, textarea::placeholder { color: var(--gray-3); }
+    select { cursor: pointer; }
+    select option { background: var(--gray-1); }
+    textarea { resize: vertical; min-height: 90px; }
+    .submit-btn {
+      width: 100%; margin-top: 0.5rem;
+      background: var(--white); color: var(--black);
+      border: none; border-radius: 2px; padding: 0.8rem;
+      font-family: var(--mono); font-size: 0.72rem;
+      font-weight: 800; letter-spacing: 0.15em;
+      text-transform: uppercase; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .submit-btn:hover { background: var(--gray-5); }
+    .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .form-note {
+      font-size: 0.6rem; color: var(--gray-3); text-align: center;
+      margin-top: 0.75rem; letter-spacing: 0.04em; line-height: 1.6;
+    }
+    .success-state {
+      padding: 2.5rem 1.4rem; text-align: center;
+    }
+    .success-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .success-title { font-weight: 800; font-size: 0.9rem; color: var(--white); margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+    .success-msg { font-size: 0.75rem; color: var(--gray-4); line-height: 1.7; }
+
+    /* ── DEMOS PREVIEW ── */
+    .demos-grid { display: flex; flex-direction: column; gap: 0; }
+    .demo-card {
+      padding: 1.4rem 0; border-bottom: 1px solid var(--gray-2);
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 1rem; align-items: start;
+    }
+    .demo-card:first-child { border-top: 1px solid var(--gray-2); }
+    .demo-name { font-weight: 700; font-size: 0.92rem; color: var(--white); margin-bottom: 0.25rem; }
+    .demo-builder { font-size: 0.68rem; color: var(--gray-4); margin-bottom: 0.6rem; }
+    .demo-desc { font-size: 0.78rem; color: var(--gray-5); line-height: 1.7; margin-bottom: 0.6rem; }
+    .demo-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .demo-tag {
+      font-size: 0.58rem; letter-spacing: 0.1em; padding: 0.15rem 0.5rem;
+      background: var(--gray-1); border: 1px solid var(--gray-2);
+      border-radius: 2px; color: var(--gray-4); text-transform: uppercase;
+    }
+    .demo-number {
+      font-size: 0.6rem; color: var(--gray-3); font-weight: 700;
+      letter-spacing: 0.1em; padding-top: 0.2rem;
+    }
+    .project-idea {
+      font-size: 0.82rem; color: var(--white); font-weight: 500;
+      text-align: center; padding: 2rem 1.5rem; line-height: 1.8;
+      border-left: 3px solid var(--white);
+      background: var(--gray-1); border-radius: 0 3px 3px 0;
+      margin: 0;
+    }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: var(--gray-2); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--gray-2); padding: 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-left { font-size: 0.62rem; color: var(--gray-4); letter-spacing: 0.1em; }
+    .footer-right { font-size: 0.62rem; color: var(--gray-3); letter-spacing: 0.08em; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+      background: var(--white); color: var(--black);
+      font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.08em; padding: 0.75rem 1.2rem;
+      border-radius: 3px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── STATUS BADGE ── */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--gray-4); background: var(--gray-1);
+      border: 1px solid var(--gray-2); border-radius: 2px;
+      padding: 0.3rem 0.75rem; margin-bottom: 2.5rem;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--white); animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid var(--gray-3); border-top-color: var(--black);
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+      vertical-align: middle; margin-right: 0.4rem;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 0 1rem; }
+      .nav-logo { font-size: 0.68rem; }
+      .nav-links { gap: 0; }
+      .nav-link { padding: 0.25rem 0.4rem; font-size: 0.55rem; }
+      
+      #hero { padding: 5rem 1rem 3rem; }
+      .hero-headline { font-size: 3.5rem; }
+      .hero-sub { font-size: 0.7rem; margin-bottom: 1.5rem; }
+      .terminal-block { padding: 1rem; margin-bottom: 1.5rem; }
+      .terminal-block .t-line { font-size: 0.65rem; }
+      .hero-cta { flex-direction: column; gap: 0.5rem; }
+      .btn { width: 100%; text-align: center; padding: 0.7rem 1rem; }
+      
+      .countdown-strip { flex-wrap: wrap; }
+      .cd-unit { padding: 1rem; min-width: 25%; }
+      .cd-num { font-size: 1.5rem; }
+      .cd-label { font-size: 0.45rem; }
+      
+      .explainer { font-size: 0.65rem; padding: 1rem; }
+      
+      section { padding: 3rem 1rem; }
+      .section-heading { font-size: 2rem; }
+      .section-eyebrow { font-size: 0.55rem; }
+      
+      .info-grid { grid-template-columns: 1fr 1fr; }
+      .info-cell { padding: 1rem; }
+      .info-cell-label { font-size: 0.5rem; }
+      .info-cell-value { font-size: 0.8rem; }
+      
+      .agenda-item { grid-template-columns: 60px 1fr; gap: 0.75rem; padding: 1rem 0; }
+      .agenda-time { font-size: 0.6rem; }
+      .agenda-name { font-size: 0.8rem; }
+      .agenda-desc { font-size: 0.7rem; }
+      
+      .project-idea { font-size: 0.75rem; padding: 1.25rem 1rem; }
+      
+      .forms-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .form-header { padding: 0.8rem 1rem; }
+      .form-header-title { font-size: 0.65rem; }
+      .form-body { padding: 1rem; }
+      .field-label { font-size: 0.55rem; }
+      input, select, textarea { font-size: 0.7rem; padding: 0.5rem 0.6rem; }
+      .submit-btn { font-size: 0.65rem; padding: 0.7rem; }
+      .form-note { font-size: 0.5rem; }
+      
+      footer { flex-direction: column; text-align: center; gap: 0.5rem; }
+      .footer-left, .footer-right { font-size: 0.55rem; }
+      
+      .toast { bottom: 1rem; right: 1rem; left: 1rem; font-size: 0.65rem; }
+      
+      .hamburger { display: flex; }
+      nav { padding: 0 1rem; justify-content: space-between; }
+      .nav-links {
+        position: absolute; top: 52px; left: 0; right: 0;
+        background: rgba(13,13,13,0.98); flex-direction: column;
+        padding: 1rem; gap: 0.5rem; border-bottom: 1px solid var(--gray-2);
+        display: none;
+      }
+      .nav-links.active { display: flex; }
+      .nav-link { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <span class="prompt">~/anambra $</span> git push
+  </div>
+  <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <div class="nav-links">
+    <a class="nav-link active" href="#hero" onclick="setActive(this)">Home</a>
+    <a class="nav-link" href="#about" onclick="setActive(this)">About</a>
+    <a class="nav-link" href="#demos" onclick="setActive(this)">Demos</a>
+    <a class="nav-link" href="#join" onclick="setActive(this)">Join</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+
+    <h1 class="hero-headline">git<br><em>push</em></h1>
+
+    <p class="hero-sub">
+      Build. Ship. Demo. Repeat.
+    </p>
+
+    <div class="terminal-bar">
+      <div class="terminal-dots">
+        <div class="td td-r"></div>
+        <div class="td td-y"></div>
+        <div class="td td-g"></div>
+      </div>
+      <span class="terminal-title">bash — anambra-techies</span>
+    </div>
+        <div class="terminal-block">
+      <div class="t-line"><span class="t-prompt">~/anambra $ </span><span class="t-cmd">whatis git-push</span></div>
+      <div class="t-line t-output">> A monthly meetup for builders, makers & founders in Anambra</div>
+      <div class="t-blank"></div>
+      <div class="t-line"><span class="t-prompt">~/anambra $ </span><span class="t-cmd">git-push --help</span></div>
+      <div class="t-line t-output">> Usage: git-push [OPTIONS]</div>
+      <div class="t-line t-output">>   --demo    → Show your project to the community</div>
+      <div class="t-line t-output">>   --learn   → Deep-dive into practical tech topics</div>
+      <div class="t-line t-output">>   --network → Connect with fellow builders</div>
+      <div class="t-blank"></div>
+      <div class="t-line"><span class="t-prompt">~/anambra $ </span><span class="t-cmd">./register --next</span><span class="cursor"></span></div>
+    </div>
+
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#join">Register →</a>
+      <a class="btn btn-secondary" href="#demos">Submit a Demo</a>
+    </div>
+  </div>
+</section>
+
+<!-- COUNTDOWN -->
+<div class="countdown-strip">
+  <div class="cd-unit"><span class="cd-num" id="cd-days">00</span><span class="cd-label">Days</span></div>
+  <div class="cd-unit"><span class="cd-num" id="cd-hours">00</span><span class="cd-label">Hours</span></div>
+  <div class="cd-unit"><span class="cd-num" id="cd-mins">00</span><span class="cd-label">Minutes</span></div>
+  <div class="cd-unit"><span class="cd-num" id="cd-secs">00</span><span class="cd-label">Seconds</span></div>
+</div>
+
+<p class="explainer">A monthly meetup where builders demo what they've shipped, learn from each other, and push Anambra's tech scene forward.</p>
+
+<!-- ABOUT / AGENDA -->
+<section id="about">
+  <div class="section-eyebrow">schedule</div>
+  <h2 class="section-heading">What happens at<br><em>Git Push</em></h2>
+
+  <div class="info-grid">
+    <div class="info-cell"><div class="info-cell-label">Date</div><div class="info-cell-value">Saturday, 2 May 2026</div></div>
+    <div class="info-cell"><div class="info-cell-label">Location</div><div class="info-cell-value">Awka, Anambra State</div></div>
+    <div class="info-cell"><div class="info-cell-label">Time</div><div class="info-cell-value">12:00 PM — 4:00 PM</div></div>
+    <div class="info-cell"><div class="info-cell-label">Admission</div><div class="info-cell-value">Free</div></div>
+  </div>
+
+  <div class="agenda">
+    <div class="agenda-item" style="animation-delay:0.05s">
+      <div class="agenda-time">12:00 PM</div>
+      <div><div class="agenda-name">Doors Open</div><div class="agenda-desc">Arrive, settle in, connect with builders around you.</div></div>
+    </div>
+    <div class="agenda-item" style="animation-delay:0.1s">
+      <div class="agenda-time">12:30 PM</div>
+      <div><div class="agenda-name">Technical Session</div><div class="agenda-desc">A subject matter expert from our community teaches something practical — something you can apply to your work immediately.</div></div>
+    </div>
+    <div class="agenda-item" style="animation-delay:0.15s">
+      <div class="agenda-time">01:30 PM</div>
+      <div><div class="agenda-name">Demo Session</div><div class="agenda-desc">Selected builders get 4 minutes each to show what they've been shipping. Real products. Real progress.</div></div>
+    </div>
+    <div class="agenda-item" style="animation-delay:0.2s">
+      <div class="agenda-time">03:00 PM</div>
+      <div><div class="agenda-name">Audience Vote & Winner</div><div class="agenda-desc">The crowd picks the best demo. Winner announced live on stage.</div></div>
+    </div>
+    <div class="agenda-item" style="animation-delay:0.25s">
+      <div class="agenda-time">03:15 PM</div>
+      <div><div class="agenda-name">Networking & Photos</div><div class="agenda-desc">Connect, collaborate, and celebrate. This is where the real conversations start.</div></div>
+    </div>
+    <div class="agenda-item" style="animation-delay:0.3s">
+      <div class="agenda-time">04:00 PM</div>
+      <div><div class="agenda-name">Ship it. Go home. Build more.</div><div class="agenda-desc">See you next month.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DEMOS PREVIEW -->
+<section id="demos">
+  <div class="section-eyebrow">call for projects</div>
+  <h2 class="section-heading">This month's<br><em>project idea:</em></h2>
+
+  <div class="demos-grid">
+    <blockquote class="project-idea">Build an app that takes your current mood and returns a perfect playlist for it. Connect it to the Spotify API or curate your own dataset. The interesting challenge is how you capture the mood in the first place.</blockquote>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FORMS -->
+<section id="join">
+  <div class="section-eyebrow">get involved</div>
+  <h2 class="section-heading">Register or<br><em>submit a demo</em></h2>
+
+  <div class="forms-grid">
+
+    <!-- REGISTRATION FORM -->
+    <div class="form-panel" id="reg-panel">
+      <div class="form-header">
+        <span class="form-header-icon">→</span>
+        <span class="form-header-title">Attend Git Push</span>
+        <span class="form-header-sub">Free</span>
+      </div>
+      <div class="form-body" id="reg-body">
+        <div class="field-group">
+          <label class="field-label">Full name <span class="req">*</span></label>
+          <input type="text" id="reg-name" placeholder="Your name" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email address <span class="req">*</span></label>
+          <input type="email" id="reg-email" placeholder="you@example.com" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">You are a <span class="req">*</span></label>
+          <select id="reg-role">
+            <option value="">Select one</option>
+            <option value="Developer / Engineer">Developer / Engineer</option>
+            <option value="Founder / Entrepreneur">Founder / Entrepreneur</option>
+            <option value="Product Manager">Product Manager</option>
+            <option value="Designer">Designer</option>
+            <option value="Marketer">Marketer / Growth</option>
+            <option value="Student">Student</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Twitter / X handle</label>
+          <input type="text" id="reg-twitter" placeholder="@handle (optional)" />
+        </div>
+        <button class="submit-btn" id="reg-btn" onclick="submitRegistration()">
+          $ Register for Git Push
+        </button>
+        <p class="form-note">Free to attend · Awka, Anambra State · 2 May 2026</p>
+      </div>
+    </div>
+
+    <!-- DEMO SUBMISSION FORM -->
+    <div class="form-panel" id="demo-panel">
+      <div class="form-header">
+        <span class="form-header-icon">⌥</span>
+        <span class="form-header-title">Submit a Demo</span>
+        <span class="form-header-sub">4 min on stage</span>
+      </div>
+      <div class="form-body" id="demo-body">
+        <div class="field-group">
+          <label class="field-label">Project name <span class="req">*</span></label>
+          <input type="text" id="demo-name" placeholder="What did you build?" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Your name <span class="req">*</span></label>
+          <input type="text" id="demo-builder" placeholder="Full name" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email <span class="req">*</span></label>
+          <input type="email" id="demo-email" placeholder="For follow-up if selected" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Twitter / X handle</label>
+          <input type="text" id="demo-twitter" placeholder="@handle (optional)" />
+        </div>
+        <button class="submit-btn" id="demo-btn" onclick="submitDemo()">
+          $ git push --demo
+        </button>
+        <p class="form-note">Submissions close 7 days before the event · Selected builders contacted by email</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">ANAMBRA TECHIES · GIT PUSH · 2026</div>
+  <div class="footer-right">Build the future from Anambra</div>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────────────────
+  // Replace these with your actual Google Apps Script Web App URLs
+  // after deploying your Google Sheets script (instructions below)
+  const REGISTRATION_SHEET_URL = "https://script.google.com/macros/s/AKfycbzbCsgC5lunkVC4kBHeqxY4TIi5ZmLi5g5uc-6nwpZZ_PcnCdHXkyO_rRPD4OnMkB4Y/exec";
+  const DEMO_SHEET_URL = "https://script.google.com/macros/s/AKfycbwHeySTMbxVoxs8W14JN71aqm8j6pQU948g9yh2DAORg2I5LavoXVAX2sHLNGw7IpAATw/exec";
+  // ────────────────────────────────────────────────────────────────────
+
+  // ── COUNTDOWN ──
+  const EVENT = new Date("2026-05-02T10:00:00");
+  function tick() {
+    const diff = Math.max(0, EVENT - Date.now());
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2, "0");
+    document.getElementById("cd-days").textContent = pad(d);
+    document.getElementById("cd-hours").textContent = pad(h);
+    document.getElementById("cd-mins").textContent = pad(m);
+    document.getElementById("cd-secs").textContent = pad(s);
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ── NAV ACTIVE ──
+  function setActive(el) {
+    document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+    el.classList.add("active");
+    document.querySelector(".nav-links").classList.remove("active");
+    document.querySelector(".hamburger").classList.remove("active");
+  }
+  function toggleMobileMenu() {
+    document.querySelector(".nav-links").classList.toggle("active");
+    document.querySelector(".hamburger").classList.toggle("active");
+  }
+  window.addEventListener("scroll", () => {
+    const sections = ["hero","about","demos","join"];
+    let current = "hero";
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && window.scrollY >= el.offsetTop - 120) current = id;
+    });
+    document.querySelectorAll(".nav-link").forEach(l => {
+      l.classList.toggle("active", l.getAttribute("href") === "#" + current);
+    });
+  });
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3500);
+  }
+
+  // ── SET LOADING STATE ──
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Submitting...';
+    } else {
+      btn.disabled = false;
+    }
+  }
+
+  // ── SHOW SUCCESS ──
+  function showSuccess(bodyId, title, message) {
+    const body = document.getElementById(bodyId);
+    body.innerHTML = `
+      <div class="success-state">
+        <div class="success-icon">✓</div>
+        <div class="success-title">${title}</div>
+        <div class="success-msg">${message}</div>
+      </div>`;
+  }
+
+  // ── SUBMIT TO GOOGLE SHEETS VIA APPS SCRIPT ──
+  async function postToSheet(url, payload) {
+    const res = await fetch(url, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, timestamp: new Date().toISOString() }),
+    });
+    // no-cors means we can't read the response — assume success if no throw
+    return true;
+  }
+
+  // ── REGISTRATION ──
+  async function submitRegistration() {
+    const name    = document.getElementById("reg-name").value.trim();
+    const email   = document.getElementById("reg-email").value.trim();
+    const role    = document.getElementById("reg-role").value;
+    const twitter = document.getElementById("reg-twitter").value.trim();
+
+    if (!name || !email || !role) {
+      showToast("Please fill in all required fields.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast("Please enter a valid email address.");
+      return;
+    }
+
+    setLoading("reg-btn", true);
+    try {
+      await postToSheet(REGISTRATION_SHEET_URL, { name, email, role, twitter });
+      showSuccess("reg-body", "You're registered!", "Welcome to Git Push. Check your email for event details. Now go build something to demo next month.");
+    } catch (err) {
+      setLoading("reg-btn", false);
+      document.getElementById("reg-btn").textContent = "$ Register for Git Push";
+      showToast("Something went wrong. Please try again.");
+    }
+  }
+
+  // ── DEMO SUBMISSION ──
+  async function submitDemo() {
+    const name    = document.getElementById("demo-name").value.trim();
+    const builder = document.getElementById("demo-builder").value.trim();
+    const email   = document.getElementById("demo-email").value.trim();
+    const twitter = document.getElementById("demo-twitter").value.trim();
+
+    if (!name || !builder || !email) {
+      showToast("Please fill in all required fields.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast("Please enter a valid email address.");
+      return;
+    }
+
+    setLoading("demo-btn", true);
+    try {
+      await postToSheet(DEMO_SHEET_URL, { projectName: name, builderName: builder, email, twitter });
+      showSuccess("demo-body", "Submission received!", "We'll review your project and reach out before the event if you're selected to demo on stage. Keep building.");
+    } catch (err) {
+      setLoading("demo-btn", false);
+      document.getElementById("demo-btn").textContent = "$ git push --demo";
+      showToast("Something went wrong. Please try again.");
+    }
+  }
+
+  // ── ENTER KEY SUBMIT ──
+  document.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+      if (e.target.closest("#reg-panel")) submitRegistration();
+      if (e.target.closest("#demo-panel")) submitDemo();
+    }
+  });
+</script>
+
+<!--
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  HOW TO CONNECT TO GOOGLE SHEETS (2 steps)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1 — Create a Google Apps Script for EACH sheet:
+
+  a. Open Google Sheets → Extensions → Apps Script
+  b. Paste this code (create one script per sheet):
+
+  ─────────────────────────────────────────────
+  function doPost(e) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const data  = JSON.parse(e.postData.contents);
+    const row   = Object.values(data);
+
+    // Add header row on first submission
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(Object.keys(data));
+    }
+    sheet.appendRow(row);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "ok" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  ─────────────────────────────────────────────
+
+  c. Click Deploy → New deployment
+  d. Type: Web app
+  e. Execute as: Me
+  f. Who has access: Anyone
+  g. Click Deploy → Copy the Web App URL
+
+STEP 2 — Paste the URLs into this file:
+
+  Replace the two placeholder values at the top of the <script> tag:
+  REGISTRATION_SHEET_URL = "https://script.google.com/macros/s/YOUR_ID/exec"
+  DEMO_SHEET_URL         = "https://script.google.com/macros/s/YOUR_ID/exec"
+
+  Done! Submissions will flow directly into your Google Sheets.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+</body>
+</html>
