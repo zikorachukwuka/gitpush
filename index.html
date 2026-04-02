@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Git Push — Anambra Techies</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&family=Instrument+Serif:ital@0;1&family=VT323&display=swap" rel="stylesheet" />
   <style>
     /* ── RESET & BASE ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,6 +19,7 @@
       --gray-5: #bbb;
       --mono: 'JetBrains Mono', 'Courier New', monospace;
       --serif: 'Instrument Serif', Georgia, serif;
+      --typewriter: 'VT323', monospace;
     }
     html { scroll-behavior: smooth; }
     body {
@@ -125,7 +126,7 @@
     }
 
     .hero-headline {
-      font-family: var(--serif); font-size: clamp(4rem, 14vw, 9rem);
+      font-family: var(--typewriter); font-size: clamp(4rem, 14vw, 9rem);
       line-height: 0.88; letter-spacing: -0.02em;
       color: var(--white); margin-bottom: 2.5rem;
       font-weight: 400;
@@ -182,7 +183,7 @@
     }
     .section-eyebrow::before { content: '//'; color: var(--gray-3); }
     .section-heading {
-      font-family: var(--serif); font-size: clamp(2rem, 5vw, 3.2rem);
+      font-family: var(--mono); font-size: clamp(2rem, 5vw, 3.2rem);
       font-weight: 400; line-height: 1.1; color: var(--white);
       margin-bottom: 3rem;
     }
